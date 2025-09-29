@@ -10,11 +10,11 @@ from .suggestion_engine import SuggestionEngine
 from .scoring_system import ScoringSystem
 
 class PresentationAnalyzer:
-    def __init__(self, openai_client):
+    def __init__(self):
         self.audio_analyzer = AudioAnalyzer()
-        self.content_analyzer = ContentAnalyzer(openai_client)
-        self.question_generator = QuestionGenerator(openai_client)
-        self.suggestion_engine = SuggestionEngine(openai_client)
+        self.content_analyzer = ContentAnalyzer()
+        self.question_generator = QuestionGenerator()
+        self.suggestion_engine = SuggestionEngine()
         self.scoring_system = ScoringSystem()
         self.sessions: Dict[str, PresentationSession] = {}
     

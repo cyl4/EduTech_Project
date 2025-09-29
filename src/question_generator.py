@@ -1,12 +1,10 @@
 import os
-from openai import OpenAI
 from huggingface_hub import InferenceClient
 from typing import List, Dict, Any
 from .models import Question, PresentationMode
 
 class QuestionGenerator:
-    def __init__(self, openai_client):
-        self.client = openai_client
+    def __init__(self):
         self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
         self.hf_model = os.getenv('HF_CHAT_MODEL', 'mistralai/Mistral-7B-Instruct-v0.2')
         self.hf_token = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')
@@ -26,10 +24,10 @@ class QuestionGenerator:
         """Generate standard questions for different modes"""
         
         mode_context = {
-            PresentationMode.PROFESSIONAL: "professional business context",
-            PresentationMode.TECHNICAL: "technical expert context", 
-            PresentationMode.LAYPERSON: "general audience context",
-            PresentationMode.CASUAL: "casual conversation context"
+            PresentationMode.PROFESSIONAL: "professional context, is well educated but not necessarily expert",
+            PresentationMode.TECHNICAL: "technical expert context, has deep knowledge in the field",
+            PresentationMode.LAYPERSON: "general audience context, lacks specialized knowledge",
+            PresentationMode.CASUAL: "casual conversation context, informal and relaxed"
         }
         
         prompt = f"""
