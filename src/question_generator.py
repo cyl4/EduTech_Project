@@ -8,8 +8,10 @@ class QuestionGenerator:
     def __init__(self, openai_client):
         self.client = openai_client
         self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
-        self.hf_model = os.getenv('HF_CHAT_MODEL', 'meta-llama/Meta-Llama-3-8B-Instruct')
-        self.hf_client = InferenceClient(model=self.hf_model) if self.use_hf else None
+        self.hf_model = os.getenv('HF_CHAT_MODEL', 'mistralai/Mistral-7B-Instruct-v0.2')
+        self.hf_token = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')
+        self.hf_task = os.getenv('HF_TASK', 'conversational')
+        self.hf_client = InferenceClient(model=self.hf_model, token=self.hf_token) if self.use_hf else None
     
     async def generate_questions(self, transcript: str, topic: str, mode: PresentationMode, 
                                expert_documents: List[str] = None) -> List[Question]:
@@ -59,9 +61,20 @@ class QuestionGenerator:
         try:
             import anyio, json
             if self.use_hf:
-                def _run_hf():
-                    return self.hf_client.text_generation(prompt, max_new_tokens=600, temperature=0.7)
-                content = await anyio.to_thread.run_sync(_run_hf)
+                if self.hf_task == 'conversational':
+                    def _run_hf_chat():
+                        return self.hf_client.chat.completions.create(
+                            model=self.hf_model,
+                            messages=[{"role":"user","content": prompt}],
+                            temperature=0.7,
+                            max_tokens=900
+                        )
+                    resp = await anyio.to_thread.run_sync(_run_hf_chat)
+                    content = resp.choices[0].message.content
+                else:
+                    def _run_hf():
+                        return self.hf_client.text_generation(prompt, max_new_tokens=600, temperature=0.7)
+                    content = await anyio.to_thread.run_sync(_run_hf)
             else:
                 def _run_oa():
                     return self.client.chat.completions.create(
@@ -123,9 +136,20 @@ class QuestionGenerator:
         try:
             import anyio, json
             if self.use_hf:
-                def _run_hf():
-                    return self.hf_client.text_generation(prompt, max_new_tokens=800, temperature=0.5)
-                content = await anyio.to_thread.run_sync(_run_hf)
+                if self.hf_task == 'conversational':
+                    def _run_hf_chat():
+                        return self.hf_client.chat.completions.create(
+                            model=self.hf_model,
+                            messages=[{"role":"user","content": prompt}],
+                            temperature=0.5,
+                            max_tokens=1000
+                        )
+                    resp = await anyio.to_thread.run_sync(_run_hf_chat)
+                    content = resp.choices[0].message.content
+                else:
+                    def _run_hf():
+                        return self.hf_client.text_generation(prompt, max_new_tokens=800, temperature=0.5)
+                    content = await anyio.to_thread.run_sync(_run_hf)
             else:
                 def _run_oa():
                     return self.client.chat.completions.create(

@@ -8,8 +8,11 @@ class SuggestionEngine:
     def __init__(self, openai_client):
         self.client = openai_client
         self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
-        self.hf_model = os.getenv('HF_CHAT_MODEL', 'meta-llama/Meta-Llama-3-8B-Instruct')
-        self.hf_client = InferenceClient(model=self.hf_model) if self.use_hf else None
+        self.hf_model = os.getenv('HF_CHAT_MODEL', 'mistralai/Mistral-7B-Instruct-v0.2')
+        self.hf_token = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')
+        self.hf_task = os.getenv('HF_TASK', 'conversational')
+        self.hf_client = InferenceClient(model=self.hf_model, token=self.hf_token) if self.use_hf else None
+
     
     async def generate_suggestions(self, transcript: str, topic: str, mode: PresentationMode, 
                                  unclear_sentences: List[str]) -> List[Suggestion]:
@@ -59,9 +62,20 @@ class SuggestionEngine:
         try:
             import anyio, json
             if self.use_hf:
-                def _run_hf():
-                    return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.8)
-                content = await anyio.to_thread.run_sync(_run_hf)
+                if self.hf_task == 'conversational':
+                    def _run_hf_chat():
+                        return self.hf_client.chat.completions.create(
+                            model=self.hf_model,
+                            messages=[{"role":"user","content": prompt}],
+                            temperature=0.8,
+                            max_tokens=700
+                        )
+                    resp = await anyio.to_thread.run_sync(_run_hf_chat)
+                    content = resp.choices[0].message.content
+                else:
+                    def _run_hf():
+                        return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.8)
+                    content = await anyio.to_thread.run_sync(_run_hf)
             else:
                 def _run_oa():
                     return self.client.chat.completions.create(
@@ -115,9 +129,29 @@ class SuggestionEngine:
         try:
             import anyio, json
             if self.use_hf:
-                def _run_hf():
-                    return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.8)
-                content = await anyio.to_thread.run_sync(_run_hf)
+                if self.hf_task == 'conversational':
+                    def _run_hf_chat():
+                        return self.hf_client.chat.completions.create(
+                            model=self.hf_model,
+                            messages=[{"role":"user","content": prompt}],
+                            temperature=0.8,
+                            max_tokens=700
+                        )
+                    resp = await anyio.to_thread.run_sync(_run_hf_chat)
+                    content = resp.choices[0].message.content
+                else:
+                    def _run_hf():
+                        return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.8)
+                    content = await anyio.to_thread.run_sync(_run_hf)
+            elif self.use_grok:
+                def _run_grok():
+                    return self.grok_client.chat.completions.create(
+                        model=self.grok_model,
+                        messages=[{"role":"user","content": prompt}],
+                        temperature=0.8
+                    )
+                resp = await anyio.to_thread.run_sync(_run_grok)
+                content = resp.choices[0].message.content
             else:
                 def _run_oa():
                     return self.client.chat.completions.create(
@@ -171,9 +205,29 @@ class SuggestionEngine:
         try:
             import anyio, json
             if self.use_hf:
-                def _run_hf():
-                    return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.7)
-                content = await anyio.to_thread.run_sync(_run_hf)
+                if self.hf_task == 'conversational':
+                    def _run_hf_chat():
+                        return self.hf_client.chat.completions.create(
+                            model=self.hf_model,
+                            messages=[{"role":"user","content": prompt}],
+                            temperature=0.7,
+                            max_tokens=700
+                        )
+                    resp = await anyio.to_thread.run_sync(_run_hf_chat)
+                    content = resp.choices[0].message.content
+                else:
+                    def _run_hf():
+                        return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.7)
+                    content = await anyio.to_thread.run_sync(_run_hf)
+            elif self.use_grok:
+                def _run_grok():
+                    return self.grok_client.chat.completions.create(
+                        model=self.grok_model,
+                        messages=[{"role":"user","content": prompt}],
+                        temperature=0.7
+                    )
+                resp = await anyio.to_thread.run_sync(_run_grok)
+                content = resp.choices[0].message.content
             else:
                 def _run_oa():
                     return self.client.chat.completions.create(
