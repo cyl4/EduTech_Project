@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react'
 import React from "react";
 // import { Routes, Route } from "react-router-dom";
 import { Button } from "@/components/ui/button"
+import Dashboard from "./pages/Dashboard.jsx";
+import Login from "./pages/Login.jsx";
 import './App.css'
 
 const App = () => {
-  const [count, setCount] = useState(0)
 
   return (
-  
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
-    </div>
+    <Routes>
+      <Route path={`/Login`} element={<Login />}></Route>
+      <Route path={`/Dashboard`} element={<Dashboard />} />
+    </Routes>
   )
+ 
 }
 
 export default App;
