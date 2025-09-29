@@ -9,8 +9,9 @@ class ContentAnalyzer:
     def __init__(self, openai_client):
         self.client = openai_client
         self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
-        self.hf_model = os.getenv('HF_CHAT_MODEL', 'meta-llama/Meta-Llama-3-8B-Instruct')
+        self.hf_model = os.getenv('HF_CHAT_MODEL', 'deepseek-ai/DeepSeek-V3.2-Exp')
         self.hf_token = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')
+        self.hf_task = os.getenv('HF_TASK', 'conversational')  # 'text-generation' or 'conversational'
         self.hf_client = (InferenceClient(model=self.hf_model, token=self.hf_token)
                           if self.use_hf else None)
     
@@ -52,11 +53,24 @@ class ContentAnalyzer:
         try:
             import anyio, json
             if self.use_hf:
-                def _run_hf():
-                    # text-generation style completion; many providers support simple prompts
-                    return self.hf_client.text_generation(analysis_prompt, max_new_tokens=500, temperature=0.3)
-                raw = await anyio.to_thread.run_sync(_run_hf)
-                content = raw
+                if self.hf_task == 'conversational':
+                    def _run_hf_chat():
+                        return self.hf_client.chat.completions.create(
+                            model=self.hf_model,
+                            messages=[
+                                {"role": "system", "content": "You analyze presentation transcripts and return strict JSON."},
+                                {"role": "user", "content": analysis_prompt}
+                            ],
+                            max_tokens=800,
+                            temperature=0.3
+                        )
+                    resp = await anyio.to_thread.run_sync(_run_hf_chat)
+                    content = resp.choices[0].message.content
+                else:
+                    def _run_hf_text():
+                        return self.hf_client.text_generation(analysis_prompt, max_new_tokens=500, temperature=0.3)
+                    raw = await anyio.to_thread.run_sync(_run_hf_text)
+                    content = raw
             else:
                 def _run_oa():
                     return self.client.chat.completions.create(
@@ -67,7 +81,18 @@ class ContentAnalyzer:
                 response = await anyio.to_thread.run_sync(_run_oa)
                 content = response.choices[0].message.content
             
-            result = json.loads(content)
+            try:
+                result = json.loads(content)
+            except json.JSONDecodeError as json_error:
+                print(f"JSON parsing error: {json_error}")
+                print(f"Raw content received: {content}")
+                return ContentAnalysis(
+                    clarity_score=0.5,
+                    flow_score=0.5,
+                    technical_accuracy=0.5,
+                    explanation_quality=0.5,
+                    suggested_improvements=["Invalid JSON response"]
+                )
             
             return ContentAnalysis(
                 clarity_score=result.get("clarity_score", 0.5),

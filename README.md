@@ -28,6 +28,17 @@ echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
 echo "USE_HF=true" >> .env
 # Optional: pick a HF chat model (defaults to Llama 3 8B Instruct)
 echo "HF_CHAT_MODEL=meta-llama/Meta-Llama-3-8B-Instruct" >> .env
+# If the provider requires auth (e.g., Novita), set an HF token:
+echo "HF_TOKEN=your_hf_access_token_here" >> .env
+# Alternatively, login once locally:
+# huggingface-cli login
+
+# Optional: use Grok (xAI) instead of OpenAI/HF
+echo "USE_GROK=true" >> .env
+echo "GROK_API_KEY=your_xai_api_key_here" >> .env
+# optional base URL override (defaults to https://api.x.ai/v1)
+# echo "GROK_BASE_URL=https://api.x.ai/v1" >> .env
+echo "GROK_MODEL=grok-2-latest" >> .env
 ```
 
 3. Run the application:
