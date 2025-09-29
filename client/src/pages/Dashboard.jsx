@@ -126,7 +126,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Presentation Prep Assistant</h1>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Presentio</h1>
           </div>
         </div>
 
