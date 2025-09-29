@@ -1,12 +1,12 @@
 import os
-from openai import OpenAI
+# from openai import OpenAI
 from huggingface_hub import InferenceClient
 from typing import List, Dict, Any
 from .models import Question, PresentationMode
 
 class QuestionGenerator:
-    def __init__(self, openai_client):
-        self.client = openai_client
+    def __init__(self, InferenceClient):
+        self.client = InferenceClient
         self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
         self.hf_model = os.getenv('HF_CHAT_MODEL', 'mistralai/Mistral-7B-Instruct-v0.2')
         self.hf_token = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')

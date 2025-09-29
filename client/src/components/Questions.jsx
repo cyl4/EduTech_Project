@@ -9,36 +9,35 @@ const Questions = () => {
   const [newUserQuery, setNewUserQuery] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
+  const [questions, setQuestions] = useState([]);
 
-  async function generateQuestion(input) {
-    const response = await fetch(`${BASE_URL}/generate-question`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ question: input }),
-    });
-
-    const data = await response.json();
-    return data.answer;
-  }
+  async function generateQuestions({ transcript, topic, mode }) {
+  const response = await fetch(`${BASE_URL}/generate-questions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ transcript, topic, mode }),
+  });
+  const data = await response.json();
+  return data.questions;
+}
 
   const handleNewQuery = async (e) => {
-    e.preventDefault();
-
-    if (!newUserQuery.trim()) return;
-
-    setLoading(true);
-    try {
-      const response = await generateQuestion(newUserQuery.trim());
-      setAnswer(response);
-    } catch (error) {
-      console.error("Failed to get question:", error);
-      setAnswer("Sorry, something went wrong. Please try again.");
-    }
-    setLoading(false);
-    setNewUserQuery("");
-  };
+  e.preventDefault();
+  if (!newUserQuery.trim()) return;
+  setLoading(true);
+  try {
+    const result = await generateQuestions({
+      transcript: "", // or your transcript value
+      topic: newUserQuery.trim(),
+      mode: "professional", // or user-selected mode
+    });
+    setQuestions(result);
+  } catch (error) {
+    setQuestions([{ question: "Sorry, something went wrong. Please try again." }]);
+  }
+  setLoading(false);
+  setNewUserQuery("");
+};
 
   return (
     <Card className="mb-8">
@@ -48,22 +47,13 @@ const Questions = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleNewQuery} className="space-y-4">
-          <div>
-            <Input
-              id="userchatinput"
-              type="text"
-              value={newUserQuery}
-              onChange={(e) => setNewUserQuery(e.target.value)}
-              required
-            />
-          </div>
-        </form>
-
-        {answer && (
+        {questions.length > 0 && (
             <div className="mt-4 p-4 bg-gray-100 rounded">
-                <strong>Assistant:</strong> {answer}
-            </div>
+    <strong>Generated Questions:</strong>
+    <ul>
+      {questions.map((q, i) => <li key={i}>{q.question}</li>)}
+    </ul>
+  </div>
         )}
       </CardContent>
     </Card>

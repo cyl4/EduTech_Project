@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from question_generator import generate_question  # your function
+from question_generator import QuestionGenerator # your function
+from models import PresentationMode
 
 app = FastAPI()
 app.add_middleware(
@@ -10,9 +11,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/generate-question")
-async def generate_question_endpoint(request: Request):
+generator = QuestionGenerator(openai_client=None)
+
+@app.post("/generate-questions")
+async def generate_questions_endpoint(request: Request):
     data = await request.json()
-    question = data.get("question")
-    answer = generate_question(question) 
-    return {"answer": answer}
+    transcript = data.get("transcript", "")
+    topic = data.get("topic", "")
+    mode = PresentationMode(data.get("mode", "professional"))
+    expert_documents = data.get("expert_documents", None)
+    questions = await generator.generate_questions(transcript, topic, mode, expert_documents)
+    return {"questions": [q.dict() for q in questions]}
