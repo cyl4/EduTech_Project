@@ -1,22 +1,20 @@
-import { useState, useEffect } from 'react'
+
+import { useState, useEffect } from 'react';
 import React from "react";
-// import { Routes, Route } from "react-router-dom";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
-// your original component (untouched)
-  const [count, setCount] = useState(0)
-
-  // dashboard state
-  const [mode, setMode] = useState('professional')
-  const [topic, setTopic] = useState('')
-  const [customPrompt, setCustomPrompt] = useState('')
-  const [transcript, setTranscript] = useState('')
+const Dashboard = () => {
+  const [count, setCount] = useState(0);
+  const [mode, setMode] = useState('professional');
+  const [topic, setTopic] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [transcript, setTranscript] = useState('');
 
   useEffect(() => {
     // autofocus topic on mount
-    const el = document.getElementById('topic')
-    el?.focus()
-  }, [])
+    const el = document.getElementById('topic');
+    el?.focus();
+  }, []);
 
   const MODES = [
     { id: 'professional', label: 'Professional', hint: 'Professional presentation style, perfect for collegiate and professional presentations.' },
@@ -24,17 +22,16 @@ import { Button } from "@/components/ui/button"
     { id: 'layperson',    label: 'Layperson',    hint: 'For beginners to the topic, child-friendly, minimal jargon.' },
     { id: 'casual',       label: 'Casual',       hint: 'Friendly, conversational tone for casual practice.' },
     { id: 'custom',       label: 'Custom',       hint: 'Use your own style & instructions.' },
-  ]
+  ];
 
   function handleCreateSession() {
-    const stamp = new Date().toLocaleString()
+    const stamp = new Date().toLocaleString();
     const tone = mode === 'custom' && customPrompt.trim()
       ? `custom → ${customPrompt.trim()}`
-      : mode
-    const seed = `\n[${stamp}] New session #${count + 1}\n• Mode: ${tone}\n• Topic: ${topic || '(none)'}\n`
-    setTranscript(prev => (prev ? prev + "\n" + seed : seed))
-    setCount(c => c + 1)
-
+      : mode;
+    const seed = `\n[${stamp}] New session #${count + 1}\n• Mode: ${tone}\n• Topic: ${topic || '(none)'}\n`;
+    setTranscript(prev => (prev ? prev + "\n" + seed : seed));
+    setCount(c => c + 1);
     // Hook this to your Node backend:
     // await fetch('/api/session', {
     //   method: 'POST',
@@ -44,19 +41,17 @@ import { Button } from "@/components/ui/button"
   }
 
   function handleCopy() {
-    if (!transcript) return
-    navigator.clipboard?.writeText(transcript)
+    if (!transcript) return;
+    navigator.clipboard?.writeText(transcript);
   }
 
   function handleClearTranscript() {
-    setTranscript('')
+    setTranscript('');
   }
 
-  const activeHint = MODES.find(m => m.id === mode)?.hint
+  const activeHint = MODES.find(m => m.id === mode)?.hint;
 
-  const Dashboard = () => {
-
-    return (
+  return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30 p-6">
       <div className="w-full max-w-5xl">
         {/* Header */}
@@ -170,7 +165,8 @@ import { Button } from "@/components/ui/button"
   )
 
 
-  }
+
+}
 
 
 export default Dashboard;
