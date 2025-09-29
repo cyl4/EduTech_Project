@@ -10,7 +10,9 @@ class ContentAnalyzer:
         self.client = openai_client
         self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
         self.hf_model = os.getenv('HF_CHAT_MODEL', 'meta-llama/Meta-Llama-3-8B-Instruct')
-        self.hf_client = InferenceClient(model=self.hf_model) if self.use_hf else None
+        self.hf_token = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')
+        self.hf_client = (InferenceClient(model=self.hf_model, token=self.hf_token)
+                          if self.use_hf else None)
     
     async def analyze_content(self, transcript: str, topic: str, mode: PresentationMode, custom_context: str = None) -> ContentAnalysis:
         """Analyze presentation content for clarity and flow"""
