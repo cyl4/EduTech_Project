@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useRef } from 'react';
 import { BASE_URL } from "../../../config";
 import Questions from '../components/Questions';
+import { encodeWAV } from '../lib/wavEncoder'; // Import a utility to encode WAV
 
 const Dashboard = () => {
   const [count, setCount] = useState(0);
@@ -40,16 +40,23 @@ const Dashboard = () => {
     };
     mediaRecorder.onstop = async () => {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-      setAudioURL(URL.createObjectURL(audioBlob));
+
+      // Convert WebM to WAV
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const wavBlob = encodeWAV(arrayBuffer);
+
+      setAudioURL(URL.createObjectURL(wavBlob));
+
       // Send audio to backend and get transcript
       const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.webm');
+      formData.append('file', wavBlob, 'recording.wav');
       const response = await fetch(`${BASE_URL}/analyze-audio`, {
         method: 'POST',
         body: formData,
       });
       const data = await response.json();
       setTranscript(data.transcription || '');
+
       // Send transcript to question generator
       const questionRes = await fetch(`${BASE_URL}/generate-questions`, {
         method: 'POST',
@@ -119,7 +126,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Presentio</h1>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Presentation Prep Assistant</h1>
           </div>
         </div>
 
