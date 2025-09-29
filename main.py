@@ -1,7 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-from openai import OpenAI
 import tempfile
 import os
 import json
@@ -15,12 +14,11 @@ import PyPDF2
 from io import BytesIO
 
 load_dotenv()
-client = OpenAI()
 
 app = FastAPI(title="AI Presentation Coach", description="AI-powered presentation skills improvement")
 
 # Initialize the presentation analyzer
-analyzer = PresentationAnalyzer(client)
+analyzer = PresentationAnalyzer()
 
 # Store active WebSocket connections
 active_connections: dict = {}

@@ -1,13 +1,11 @@
 import os
-from openai import OpenAI
 from huggingface_hub import InferenceClient
 import re
 from typing import List, Dict, Any
 from .models import ContentAnalysis, PresentationMode
 
 class ContentAnalyzer:
-    def __init__(self, openai_client):
-        self.client = openai_client
+    def __init__(self):
         self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
         self.hf_model = os.getenv('HF_CHAT_MODEL', 'deepseek-ai/DeepSeek-V3.2-Exp')
         self.hf_token = os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')

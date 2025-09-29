@@ -1,6 +1,5 @@
 fastapi
 uvicorn
-openai
 python-dotenv
 websockets
 pydantic
@@ -20,3 +19,4 @@ jinja2
 websocket-client
 requests
 huggingface-hub
+faster-whisper

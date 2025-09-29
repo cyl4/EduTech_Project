@@ -26,10 +26,10 @@ class QuestionGenerator:
         """Generate standard questions for different modes"""
         
         mode_context = {
-            PresentationMode.PROFESSIONAL: "professional business context",
-            PresentationMode.TECHNICAL: "technical expert context", 
-            PresentationMode.LAYPERSON: "general audience context",
-            PresentationMode.CASUAL: "casual conversation context"
+            PresentationMode.PROFESSIONAL: "professional context, is well educated but not necessarily expert",
+            PresentationMode.TECHNICAL: "technical expert context, has deep knowledge in the field",
+            PresentationMode.LAYPERSON: "general audience context, lacks specialized knowledge",
+            PresentationMode.CASUAL: "casual conversation context, informal and relaxed"
         }
         
         prompt = f"""
