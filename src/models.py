@@ -10,6 +10,7 @@ class PresentationMode(str, Enum):
     CUSTOM = "custom"
 
 class AudioMetrics(BaseModel):
+    transcription: str
     pace: float  # words per minute
     tone: float  # average pitch
     filler_words: List[str]

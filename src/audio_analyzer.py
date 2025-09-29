@@ -1,39 +1,43 @@
 import librosa
 import numpy as np
 from typing import List, Tuple
-from models import AudioMetrics
-from speech_to_text import SpeechToText
-from senselab import SpeechAnalyzer
+import re
+from .models import AudioMetrics
+from .speech_to_text import SpeechToText
 
 class AudioAnalyzer:
     def __init__(self, stt_model_path: str = "base", device: str = "cpu"):
-        self.speech_analyzer = SpeechAnalyzer()
+        self.filler_words = [
+            'um', 'uh', 'like', 'you know', 'so', 'well', 'actually',
+            'basically', 'literally', 'right', 'okay', 'alright'
+        ]
         self.speech_to_text = SpeechToText(model_path=stt_model_path, device=device)
 
     def analyze_audio(self, audio_path: str, sample_rate: int = 16000) -> AudioMetrics:
-        """Analyze audio for presentation metrics and transcription using SenseLab."""
+        """Analyze audio for presentation metrics and transcription."""
         try:
-            # Step 1: Analyze audio using SenseLab
-            analysis_result = self.speech_analyzer.analyze(audio_path)
+            # Step 1: Transcribe audio
+            transcription_result = self.speech_to_text.transcribe(audio_path)
+            transcription = transcription_result["transcription"]
+            language = transcription_result["language"]
 
-            # Extract metrics from SenseLab's result
-            transcription = analysis_result.transcription
-            language = analysis_result.language
-            pace = analysis_result.pace
-            tone = analysis_result.tone
-            filler_words = analysis_result.filler_words
-            filler_count = len(filler_words)
-            intonation_variance = analysis_result.intonation_variance
-            clarity_score = analysis_result.clarity_score
+            # Step 2: Load audio data for analysis
+            audio_array, sr = librosa.load(audio_path, sr=sample_rate)
 
+            # Step 3: Extract features
+            pace = self._calculate_pace(audio_array, sr)
+            tone = self._calculate_tone(audio_array, sr)
+            filler_words, filler_count = self._detect_filler_words(transcription)
+            intonation_variance = self._calculate_intonation_variance(audio_array, sr)
+            clarity_score = self._calculate_clarity_score(audio_array, sr)
             return AudioMetrics(
+                transcription=transcription,
                 pace=pace,
                 tone=tone,
                 filler_words=filler_words,
                 filler_count=filler_count,
                 intonation_variance=intonation_variance,
                 clarity_score=clarity_score,
-                transcription=transcription,
                 language=language
             )
         except Exception as e:
@@ -48,3 +52,82 @@ class AudioAnalyzer:
                 transcription="",
                 language=""
             )
+
+    def _calculate_pace(self, audio: np.ndarray, sample_rate: int) -> float:
+        """Calculate speaking pace in words per minute"""
+        # Simple energy-based speech detection
+        frame_length = int(0.025 * sample_rate)  # 25ms frames
+        hop_length = int(0.010 * sample_rate)    # 10ms hop
+        
+        # Calculate RMS energy
+        rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
+        
+        # Detect speech segments
+        speech_threshold = np.mean(rms) * 0.3
+        speech_frames = rms > speech_threshold
+        
+        # Estimate speaking time
+        speaking_time = np.sum(speech_frames) * hop_length / sample_rate
+        
+        # Rough estimate: average speaking rate is 150-160 WPM
+        # This is a simplified calculation
+        if speaking_time > 0:
+            estimated_words = len(audio) / (sample_rate * 60) * 150  # rough estimate
+            return estimated_words / (speaking_time / 60) if speaking_time > 0 else 0
+        return 0
+    
+    def _calculate_tone(self, audio: np.ndarray, sample_rate: int) -> float:
+        """Calculate average pitch/tone"""
+        try:
+            # Extract pitch using librosa
+            pitches, magnitudes = librosa.piptrack(y=audio, sr=sample_rate, threshold=0.1)
+            
+            # Get non-zero pitches
+            non_zero_pitches = pitches[pitches > 0]
+            
+            if len(non_zero_pitches) > 0:
+                return float(np.mean(non_zero_pitches))
+            return 0.0
+        except:
+            return 0.0
+    
+    def _detect_filler_words(self, transcription: str) -> Tuple[List[str], int]:
+        """Detect filler words in transcription."""
+        filler_count = 0
+        detected_fillers = []
+        words = re.findall(r"\b\w+\b", transcription.lower())
+
+        for word in words:
+            if word in self.filler_words:
+                detected_fillers.append(word)
+                filler_count += 1
+
+        return detected_fillers, filler_count
+    
+    def _calculate_intonation_variance(self, audio: np.ndarray, sample_rate: int) -> float:
+        """Calculate variance in intonation"""
+        try:
+            pitches, magnitudes = librosa.piptrack(y=audio, sr=sample_rate, threshold=0.1)
+            non_zero_pitches = pitches[pitches > 0]
+            
+            if len(non_zero_pitches) > 1:
+                return float(np.std(non_zero_pitches))
+            return 0.0
+        except:
+            return 0.0
+    
+    def _calculate_clarity_score(self, audio: np.ndarray, sample_rate: int) -> float:
+        """Calculate clarity score based on audio quality"""
+        try:
+            # Calculate signal-to-noise ratio
+            rms = librosa.feature.rms(y=audio)[0]
+            noise_floor = np.percentile(rms, 10)
+            signal_level = np.percentile(rms, 90)
+            
+            if noise_floor > 0:
+                snr = 20 * np.log10(signal_level / noise_floor)
+                # Normalize to 0-1 scale
+                return min(1.0, max(0.0, (snr + 10) / 30))
+            return 0.5
+        except:
+            return 0.5

@@ -4,9 +4,9 @@ import numpy as np
 from typing import Dict, Generator
 
 class SpeechToText:
-    def __init__(self, model_path: str = "base", device: str = "cpu"):
+    def __init__(self, model_path: str = "small", device: str = "cpu", local_files_only: bool = False):
         """Initialize the Whisper model."""
-        self.model = WhisperModel(model_path, device=device)
+        self.model = WhisperModel(model_path, device=device, compute_type="int8", local_files_only=local_files_only)
 
     def transcribe(self, audio_path: str) -> Dict[str, str]:
         """Transcribe audio to text.
@@ -53,7 +53,7 @@ class SpeechToText:
 
 # Example usage
 if __name__ == "__main__":
-    stt = SpeechToText()
-    result = stt.transcribe("path_to_audio_file.wav")
+    stt = SpeechToText(local_files_only=False)
+    result = stt.transcribe("briskaudioclip2.wav")
     print("Transcription:", result["transcription"])
     print("Language:", result["language"])
