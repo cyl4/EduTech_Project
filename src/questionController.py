@@ -11,7 +11,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-generator = QuestionGenerator(openai_client=None)
+generator = QuestionGenerator()
 
 @app.post("/generate-questions")
 async def generate_questions_endpoint(request: Request):
