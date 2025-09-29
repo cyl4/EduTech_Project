@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { BASE_URL } from "../../../config";
+import Questions from '../components/Questions';
 
 const Dashboard = () => {
   const [count, setCount] = useState(0);
@@ -130,7 +132,7 @@ const Dashboard = () => {
               </div>
 
               <div className="rounded-xl border bg-muted/30 p-3 text-sm text-muted-foreground">
-                Tip: Wire this up to your Node API and stream model output into the transcript area.
+                <Questions />
               </div>
             </div>
           </section>
@@ -157,10 +159,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Keep a simple button to match your original layout (can be removed) */}
-      <div className="mt-8">
-        <Button onClick={handleCreateSession}>Click me</Button>
-      </div>
     </div>
   )
 
