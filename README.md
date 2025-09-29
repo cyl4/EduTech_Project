@@ -24,6 +24,10 @@ pip install -r requirements.txt
 # Create .env file with your OpenAI API key
 echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
 # Replace 'your_openai_api_key_here' with your actual OpenAI API key
+# Optional: use HuggingFace instead of OpenAI (no OpenAI credits required)
+echo "USE_HF=true" >> .env
+# Optional: pick a HF chat model (defaults to Llama 3 8B Instruct)
+echo "HF_CHAT_MODEL=meta-llama/Meta-Llama-3-8B-Instruct" >> .env
 ```
 
 3. Run the application:

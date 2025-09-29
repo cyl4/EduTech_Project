@@ -1,4 +1,6 @@
-import openai
+import os
+from openai import OpenAI
+from huggingface_hub import InferenceClient
 import re
 from typing import List, Dict, Any
 from .models import ContentAnalysis, PresentationMode
@@ -6,6 +8,9 @@ from .models import ContentAnalysis, PresentationMode
 class ContentAnalyzer:
     def __init__(self, openai_client):
         self.client = openai_client
+        self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
+        self.hf_model = os.getenv('HF_CHAT_MODEL', 'meta-llama/Meta-Llama-3-8B-Instruct')
+        self.hf_client = InferenceClient(model=self.hf_model) if self.use_hf else None
     
     async def analyze_content(self, transcript: str, topic: str, mode: PresentationMode, custom_context: str = None) -> ContentAnalysis:
         """Analyze presentation content for clarity and flow"""
@@ -43,15 +48,24 @@ class ContentAnalyzer:
         """
         
         try:
-            response = await self.client.chat.completions.acreate(
-                model="gpt-4",
-                messages=[{"role": "user", "content": analysis_prompt}],
-                temperature=0.3
-            )
+            import anyio, json
+            if self.use_hf:
+                def _run_hf():
+                    # text-generation style completion; many providers support simple prompts
+                    return self.hf_client.text_generation(analysis_prompt, max_new_tokens=500, temperature=0.3)
+                raw = await anyio.to_thread.run_sync(_run_hf)
+                content = raw
+            else:
+                def _run_oa():
+                    return self.client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "user", "content": analysis_prompt}],
+                        temperature=0.3
+                    )
+                response = await anyio.to_thread.run_sync(_run_oa)
+                content = response.choices[0].message.content
             
-            # Parse JSON response
-            import json
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(content)
             
             return ContentAnalysis(
                 clarity_score=result.get("clarity_score", 0.5),

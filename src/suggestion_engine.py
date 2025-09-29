@@ -1,10 +1,15 @@
-import openai
+import os
+from openai import OpenAI
+from huggingface_hub import InferenceClient
 from typing import List, Dict, Any
 from .models import Suggestion, PresentationMode
 
 class SuggestionEngine:
     def __init__(self, openai_client):
         self.client = openai_client
+        self.use_hf = os.getenv('USE_HF', 'false').lower() == 'true'
+        self.hf_model = os.getenv('HF_CHAT_MODEL', 'meta-llama/Meta-Llama-3-8B-Instruct')
+        self.hf_client = InferenceClient(model=self.hf_model) if self.use_hf else None
     
     async def generate_suggestions(self, transcript: str, topic: str, mode: PresentationMode, 
                                  unclear_sentences: List[str]) -> List[Suggestion]:
@@ -52,14 +57,22 @@ class SuggestionEngine:
         """
         
         try:
-            response = await self.client.chat.completions.acreate(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.8
-            )
+            import anyio, json
+            if self.use_hf:
+                def _run_hf():
+                    return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.8)
+                content = await anyio.to_thread.run_sync(_run_hf)
+            else:
+                def _run_oa():
+                    return self.client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.8
+                    )
+                response = await anyio.to_thread.run_sync(_run_oa)
+                content = response.choices[0].message.content
             
-            import json
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(content)
             
             suggestions = []
             for m in result.get("metaphors", []):
@@ -100,14 +113,22 @@ class SuggestionEngine:
         """
         
         try:
-            response = await self.client.chat.completions.acreate(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.8
-            )
+            import anyio, json
+            if self.use_hf:
+                def _run_hf():
+                    return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.8)
+                content = await anyio.to_thread.run_sync(_run_hf)
+            else:
+                def _run_oa():
+                    return self.client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.8
+                    )
+                response = await anyio.to_thread.run_sync(_run_oa)
+                content = response.choices[0].message.content
             
-            import json
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(content)
             
             suggestions = []
             for a in result.get("analogies", []):
@@ -148,14 +169,22 @@ class SuggestionEngine:
         """
         
         try:
-            response = await self.client.chat.completions.acreate(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7
-            )
+            import anyio, json
+            if self.use_hf:
+                def _run_hf():
+                    return self.hf_client.text_generation(prompt, max_new_tokens=500, temperature=0.7)
+                content = await anyio.to_thread.run_sync(_run_hf)
+            else:
+                def _run_oa():
+                    return self.client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.7
+                    )
+                response = await anyio.to_thread.run_sync(_run_oa)
+                content = response.choices[0].message.content
             
-            import json
-            result = json.loads(response.choices[0].message.content)
+            result = json.loads(content)
             
             suggestions = []
             for img in result.get("images", []):
