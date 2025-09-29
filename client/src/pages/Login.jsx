@@ -1,13 +1,14 @@
 // Login.jsx
 import { useState, useEffect } from 'react'
 import React from "react";
-// import { Routes, Route } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button"
 
 const Login = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
 
   async function handleSubmit(e) {
@@ -35,6 +36,12 @@ const Login = () => {
       setLoading(false)
     }
   }
+
+  const handleLogin = (e) => {
+  e.preventDefault(); // Prevent page reload
+
+  navigate('/Dashboard');
+};
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30 p-6">
@@ -103,9 +110,10 @@ const Login = () => {
             )}
 
             {/* Submit */}
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Signing in…' : 'Sign in'}
+            <Button type="submit" onClick={handleLogin} className="w-full">
+              Sign In
             </Button>
+            
 
             {/* Divider */}
             <div className="relative py-2 text-center">
@@ -128,9 +136,6 @@ const Login = () => {
       </div>
 
       {/* Keep a simple button to match your original structure (optional) */}
-      <div className="mt-8">
-        <Button onClick={() => alert('Demo login page')}>Click me</Button>
-      </div>
     </div>
   )
 }
