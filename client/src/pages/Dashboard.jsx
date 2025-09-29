@@ -54,7 +54,9 @@ import { Button } from "@/components/ui/button"
 
   const activeHint = MODES.find(m => m.id === mode)?.hint
 
-  return (
+  const Dashboard = () => {
+
+    return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30 p-6">
       <div className="w-full max-w-5xl">
         {/* Header */}
@@ -166,6 +168,9 @@ import { Button } from "@/components/ui/button"
       </div>
     </div>
   )
+
+
+  }
 
 
 export default Dashboard;
