@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-import openai
+from openai import OpenAI
 import tempfile
 import os
 import json
@@ -15,12 +15,12 @@ import PyPDF2
 from io import BytesIO
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
 
 app = FastAPI(title="AI Presentation Coach", description="AI-powered presentation skills improvement")
 
 # Initialize the presentation analyzer
-analyzer = PresentationAnalyzer(openai.OpenAI())
+analyzer = PresentationAnalyzer(client)
 
 # Store active WebSocket connections
 active_connections: dict = {}
@@ -175,7 +175,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     tmp.flush()
 
                     # Transcribe audio
-                    transcript = openai.audio.transcriptions.create(
+                    transcript = client.audio.transcriptions.create(
                         model="whisper-1",
                         file=open(tmp.name, "rb")
                     )
