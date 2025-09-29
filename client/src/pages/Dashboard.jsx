@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { useRef } from 'react';
 import { BASE_URL } from "../../../config";
 import Questions from '../components/Questions';
 
@@ -11,12 +12,71 @@ const Dashboard = () => {
   const [topic, setTopic] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
   const [transcript, setTranscript] = useState('');
+  const [questions, setQuestions] = useState([]);
+
+  // Voice recording state
+  const [recording, setRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     // autofocus topic on mount
     const el = document.getElementById('topic');
     el?.focus();
   }, []);
+
+  // Voice recording handlers
+  const startRecording = async () => {
+    if (!navigator.mediaDevices) {
+      alert('Audio recording not supported in this browser.');
+      return;
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mediaRecorder = new window.MediaRecorder(stream);
+    audioChunksRef.current = [];
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
+    };
+    mediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      setAudioURL(URL.createObjectURL(audioBlob));
+      // Send audio to backend and get transcript
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'recording.webm');
+      const response = await fetch(`${BASE_URL}/analyze-audio`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      setTranscript(data.transcription || '');
+      // Send transcript to question generator
+      const questionRes = await fetch(`${BASE_URL}/generate-questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: data.transcription || '',
+          topic: topic || '',
+          mode: mode || 'professional',
+        }),
+      });
+      const questionData = await questionRes.json();
+      setQuestions(questionData.questions || []);
+    };
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start();
+    setRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+    }
+  };
+
+
+
 
   const MODES = [
     { id: 'professional', label: 'Professional', hint: 'Professional presentation style, perfect for collegiate and professional presentations.' },
@@ -62,6 +122,34 @@ const Dashboard = () => {
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Presentation Prep Assistant</h1>
           </div>
         </div>
+
+        {/* Voice Recorder */}
+          <div className="mb-6 flex flex-col items-center">
+            <h2 className="text-lg font-medium mb-2">Voice Recorder</h2>
+            <div className="flex gap-3">
+              {!recording ? (
+                <Button onClick={startRecording} variant="secondary">Start Recording</Button>
+              ) : (
+                <Button onClick={stopRecording} variant="destructive">Stop Recording</Button>
+              )}
+            </div>
+            {audioURL && (
+              <audio controls src={audioURL} className="mt-4" />
+            )}
+            {transcript && (
+              <div className="mt-4 p-2 bg-gray-100 rounded w-full max-w-xl">
+                <strong>Transcript:</strong> {transcript}
+              </div>
+            )}
+            {questions.length > 0 && (
+              <div className="mt-4 p-4 bg-gray-100 rounded w-full max-w-xl">
+                <strong>Generated Questions:</strong>
+                <ul>
+                  {questions.map((q, i) => <li key={i}>{q.question}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Left: Controls */}
