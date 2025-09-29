@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Presentation Coach</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .feature {
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+            transition: transform 0.3s ease;
+        }
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .feature h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .feature p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .api-section {
+            background: #f0f8ff;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .api-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .endpoint {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .method {
+            font-weight: bold;
+            color: #667eea;
+        }
+        .status {
+            text-align: center;
+            padding: 20px;
+            background: #e8f5e8;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .status h3 {
+            color: #2d5a2d;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 AI Presentation Coach</h1>
+            <p>Improve your presentation skills with AI-powered feedback</p>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🎯 Real-time Analysis</h3>
+                <p>Get instant feedback on pace, tone, filler words, and clarity as you speak</p>
+            </div>
+            
+            <div class="feature">
+                <h3>🧠 Adaptive Modes</h3>
+                <p>Choose from professional, technical, layperson, or casual presentation styles</p>
+            </div>
+            
+            <div class="feature">
+                <h3>❓ Smart Questions</h3>
+                <p>AI generates relevant questions to test your understanding and knowledge</p>
+            </div>
+            
+            <div class="feature">
+                <h3>💡 Improvement Suggestions</h3>
+                <p>Get metaphors, analogies, and visual aids to improve unclear explanations</p>
+            </div>
+            
+            <div class="feature">
+                <h3>📊 Comprehensive Scoring</h3>
+                <p>Detailed scoring system with actionable feedback and progress tracking</p>
+            </div>
+            
+            <div class="feature">
+                <h3>🔬 Expert Mode</h3>
+                <p>Upload PDFs and papers for technical presentations with expert-level analysis</p>
+            </div>
+        </div>
+        
+        <div class="api-section">
+            <h3>🚀 Quick Tester</h3>
+            <div class="endpoint">
+                <label>Mode:</label>
+                <select id="mode">
+                    <option value="professional">Professional</option>
+                    <option value="technical">Technical</option>
+                    <option value="layperson">Layperson</option>
+                    <option value="casual">Casual</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div class="endpoint">
+                <label>Topic:</label>
+                <input id="topic" placeholder="e.g., AI in healthcare" style="width: 100%; padding: 8px;" />
+            </div>
+            <div class="endpoint" id="customCtxRow" style="display:none;">
+                <label>Custom Context:</label>
+                <input id="customContext" placeholder="Audience/context details" style="width: 100%; padding: 8px;" />
+            </div>
+            <div class="endpoint">
+                <button id="createSessionBtn">Create Session</button>
+                <div id="sessionId" style="margin-top:8px; color:#333;"></div>
+            </div>
+            <div class="endpoint">
+                <label>Transcript (for quick analysis without audio):</label>
+                <textarea id="transcript" rows="5" style="width:100%;"></textarea>
+                <button id="analyzeTextBtn" style="margin-top:8px;">Analyze Text</button>
+            </div>
+            <div class="endpoint">
+                <form id="uploadForm">
+                    <label>Upload expert PDFs (optional):</label>
+                    <input id="pdfs" type="file" multiple accept="application/pdf" />
+                    <button type="submit">Upload PDFs</button>
+                </form>
+            </div>
+            <div class="endpoint">
+                <button id="getSummaryBtn">Get Summary</button>
+                <button id="deleteSessionBtn" style="margin-left:8px;">Delete Session</button>
+            </div>
+            <div class="endpoint">
+                <pre id="output" style="white-space:pre-wrap; max-height:300px; overflow:auto;"></pre>
+            </div>
+        </div>
+        
+        <div class="status">
+            <h3>✅ Backend Tester</h3>
+            <p>Use the controls above to call the backend endpoints.</p>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = '';
+        const output = document.getElementById('output');
+        const modeEl = document.getElementById('mode');
+        const topicEl = document.getElementById('topic');
+        const customEl = document.getElementById('customContext');
+        const customRow = document.getElementById('customCtxRow');
+        const sessionIdEl = document.getElementById('sessionId');
+        let sessionId = null;
+
+        modeEl.addEventListener('change', () => {
+            customRow.style.display = modeEl.value === 'custom' ? 'block' : 'none';
+        });
+
+        function log(obj) {
+            output.textContent = (typeof obj === 'string') ? obj : JSON.stringify(obj, null, 2);
+        }
+
+        document.getElementById('createSessionBtn').addEventListener('click', async () => {
+            try {
+                const form = new FormData();
+                form.append('mode', modeEl.value);
+                form.append('topic', topicEl.value || 'Test topic');
+                if (modeEl.value === 'custom' && customEl.value) {
+                    form.append('custom_context', customEl.value);
+                }
+                const res = await fetch(`${baseUrl}/api/sessions`, { method: 'POST', body: form });
+                const data = await res.json();
+                sessionId = data.session_id;
+                sessionIdEl.textContent = `Session: ${sessionId}`;
+                log(data);
+            } catch (e) {
+                log(e.toString());
+            }
+        });
+
+        document.getElementById('analyzeTextBtn').addEventListener('click', async () => {
+            if (!sessionId) { log('Create a session first.'); return; }
+            try {
+                const transcript = document.getElementById('transcript').value || 'This is a quick test of the analysis pipeline.';
+                const form = new FormData();
+                form.append('transcript', transcript);
+                const res = await fetch(`${baseUrl}/api/sessions/${sessionId}/analyze-text`, { method: 'POST', body: form });
+                const data = await res.json();
+                log(data);
+            } catch (e) {
+                log(e.toString());
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            if (!sessionId) { log('Create a session first.'); return; }
+            try {
+                const input = document.getElementById('pdfs');
+                const form = new FormData();
+                for (const file of input.files) {
+                    form.append('files', file);
+                }
+                const res = await fetch(`${baseUrl}/api/sessions/${sessionId}/expert-documents`, { method: 'POST', body: form });
+                const data = await res.json();
+                log(data);
+            } catch (e) {
+                log(e.toString());
+            }
+        });
+
+        document.getElementById('getSummaryBtn').addEventListener('click', async () => {
+            if (!sessionId) { log('Create a session first.'); return; }
+            try {
+                const res = await fetch(`${baseUrl}/api/sessions/${sessionId}/summary`);
+                const data = await res.json();
+                log(data);
+            } catch (e) {
+                log(e.toString());
+            }
+        });
+
+        document.getElementById('deleteSessionBtn').addEventListener('click', async () => {
+            if (!sessionId) { log('No session to delete.'); return; }
+            try {
+                const res = await fetch(`${baseUrl}/api/sessions/${sessionId}`, { method: 'DELETE' });
+                const data = await res.json();
+                log(data);
+                sessionId = null;
+                sessionIdEl.textContent = '';
+            } catch (e) {
+                log(e.toString());
+            }
+        });
+    </script>
+</body>
+</html>
