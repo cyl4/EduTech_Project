@@ -53,3 +53,4 @@ class PresentationSession(BaseModel):
     scores: List[PresentationScore] = []
     questions: List[Question] = []
     suggestions: List[Suggestion] = []
+
