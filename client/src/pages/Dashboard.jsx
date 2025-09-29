@@ -81,7 +81,7 @@ const Dashboard = () => {
   const MODES = [
     { id: 'professional', label: 'Professional', hint: 'Professional presentation style, perfect for collegiate and professional presentations.' },
     { id: 'technical',    label: 'Technical',    hint: 'For professional users well versed in their respective field, familiar with jargon, low-level knowledge of topics.' },
-    { id: 'layperson',    label: 'Layperson',    hint: 'For beginners to the topic, child-friendly, minimal jargon.' },
+    { id: 'beginner',    label: 'Beginner/Kid-Friendly',    hint: 'For beginners to the topic, child-friendly, minimal jargon.' },
     { id: 'casual',       label: 'Casual',       hint: 'Friendly, conversational tone for casual practice.' },
     { id: 'custom',       label: 'Custom',       hint: 'Use your own style & instructions.' },
   ];
